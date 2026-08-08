@@ -29,8 +29,8 @@ export function BottomNav({ signedIn }: { signedIn: boolean }) {
         }
         aria-label="Add court"
         className={cn(
-          "btn-optic fixed right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full md:hidden",
-          "bottom-[calc(4.5rem+env(safe-area-inset-bottom))]",
+          "btn-optic fixed right-5 z-50 flex h-14 w-14 items-center justify-center rounded-full md:hidden",
+          "bottom-[calc(5.75rem+env(safe-area-inset-bottom))]",
           pathname.startsWith("/courts/new") && "pointer-events-none opacity-50",
         )}
       >

@@ -7,13 +7,19 @@ export const metadata = {
 
 export default function MapPage() {
   return (
-    <div className="px-0 pt-0 md:px-0 md:pt-8">
+    <div className="-mb-20 md:mb-0 md:pt-8">
       <PageHeader
         title="Map"
         subtitle="See courts near you"
         className="mb-6 hidden md:mb-8 md:block"
       />
-      <div className="relative left-1/2 w-screen -translate-x-1/2 overflow-hidden md:rounded-none">
+      <div
+        className={
+          "fixed inset-x-0 top-14 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-0 overflow-hidden " +
+          "md:static md:inset-auto md:left-1/2 md:top-auto md:bottom-auto md:z-auto " +
+          "md:h-auto md:w-screen md:-translate-x-1/2"
+        }
+      >
         <MapView />
       </div>
     </div>

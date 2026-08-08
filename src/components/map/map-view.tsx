@@ -67,7 +67,7 @@ export function MapView() {
   }, [location, status, fetchBounds]);
 
   return (
-    <div className="relative h-[calc(100dvh-14rem)] md:h-[calc(100dvh-16rem)]">
+    <div className="relative h-full md:h-[calc(100dvh-16rem)]">
       <CourtMapInner
         courts={courts}
         center={location ?? DEFAULT_CENTER}
