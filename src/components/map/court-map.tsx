@@ -105,12 +105,12 @@ function FocusOnTarget({
     if (lastTarget.current === key) return;
     lastTarget.current = key;
 
-    const zoom = Math.max(map.getZoom(), 14);
-    // Project with a downward pixel offset so the pin lands above the card.
+    // Keep the current zoom — only recenter (with offset so the pin sits above the card).
+    const zoom = map.getZoom();
     const point = map.project(target, zoom);
     point.y += 110;
     const center = map.unproject(point, zoom);
-    map.flyTo(center, zoom, { duration: 0.45 });
+    map.panTo(center, { animate: true, duration: 0.35 });
   }, [target, map]);
 
   return null;
