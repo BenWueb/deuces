@@ -1,0 +1,142 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f3f6f9;
+  --foreground: #334155;
+  --card: #ffffff;
+  --muted: #64748b;
+  --border: #e2e8f0;
+  --court-blue: #2f6fed;
+  --court-blue-light: #4b84f2;
+  --clay: #e07a5f;
+  --clay-light: #eba089;
+  --optic-yellow: #d4f542;
+  --chalk: #f8fafc;
+  --night: #334155;
+  --night-card: #1e293b;
+  --shadow-soft: 0 1px 2px rgba(21, 32, 51, 0.04), 0 10px 28px rgba(21, 32, 51, 0.06);
+  --shadow-lift: 0 4px 12px rgba(21, 32, 51, 0.08), 0 16px 40px rgba(47, 111, 237, 0.1);
+  --shadow-court: 0 6px 18px rgba(47, 111, 237, 0.28);
+  --shadow-optic: 0 8px 22px rgba(180, 210, 40, 0.45);
+  --gradient-court: linear-gradient(135deg, #2f6fed 0%, #4b84f2 55%, #6aa0ff 100%);
+  --gradient-optic: linear-gradient(145deg, #e7ff6a 0%, #d4f542 45%, #bfe02a 100%);
+  --gradient-card: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-court: var(--court-blue);
+  --color-court-light: var(--court-blue-light);
+  --color-clay: var(--clay);
+  --color-clay-light: var(--clay-light);
+  --color-optic: var(--optic-yellow);
+  --color-chalk: var(--chalk);
+  --color-night: var(--night);
+  --color-night-card: var(--night-card);
+  --font-sans: var(--font-poppins);
+  --font-display: var(--font-poppins);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+a[href],
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+input[type="submit"]:not(:disabled),
+input[type="button"]:not(:disabled),
+input[type="reset"]:not(:disabled),
+input[type="file"]:not(:disabled),
+input[type="checkbox"]:not(:disabled),
+input[type="radio"]:not(:disabled),
+select:not(:disabled),
+label[for],
+summary {
+  cursor: pointer;
+}
+
+button:disabled,
+input:disabled,
+select:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+html {
+  height: 100%;
+  color-scheme: light;
+}
+
+body {
+  min-height: 100%;
+  background:
+    radial-gradient(900px 420px at 80% -10%, rgba(212, 245, 66, 0.16), transparent 55%),
+    radial-gradient(1100px 520px at 10% -80px, rgba(47, 111, 237, 0.12), transparent 58%),
+    linear-gradient(180deg, #f7f9fc 0%, var(--background) 40%, #eef3f9 100%);
+  color: var(--foreground);
+  font-family: var(--font-poppins), system-ui, sans-serif;
+}
+
+/* Headings share the body face for now; this hook stays so a distinct display
+   font can be swapped in without touching every component. */
+.font-display {
+  font-family: var(--font-poppins), system-ui, sans-serif;
+}
+
+.court-card {
+  position: relative;
+  background: var(--gradient-card);
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+  transition: box-shadow 180ms ease, transform 180ms ease;
+}
+
+.court-card:hover {
+  box-shadow: var(--shadow-lift);
+}
+
+.btn-court {
+  background: var(--gradient-court);
+  color: var(--chalk);
+  box-shadow: var(--shadow-court);
+}
+
+.btn-optic {
+  background: var(--gradient-optic);
+  color: var(--night);
+  box-shadow: var(--shadow-optic);
+}
+
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  font-family: inherit;
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--foreground) 5%, transparent) 25%,
+    color-mix(in srgb, var(--foreground) 10%, transparent) 50%,
+    color-mix(in srgb, var(--foreground) 5%, transparent) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
