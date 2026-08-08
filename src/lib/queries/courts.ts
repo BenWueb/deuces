@@ -2,6 +2,7 @@ import { eq, sql, desc, and } from "drizzle-orm";
 import { requireDb } from "@/lib/db";
 import {
   courts,
+  courtFavorites,
   courtPhotos,
   ratings,
   comments,
@@ -382,4 +383,84 @@ export async function getUserRating(courtId: string, userId: string) {
     .where(and(eq(ratings.courtId, courtId), eq(ratings.userId, userId)))
     .limit(1);
   return rating ?? null;
+}
+
+export async function isCourtFavorited(
+  courtId: string,
+  userId: string,
+): Promise<boolean> {
+  const db = requireDb();
+  const [row] = await db
+    .select({ id: courtFavorites.id })
+    .from(courtFavorites)
+    .where(
+      and(
+        eq(courtFavorites.courtId, courtId),
+        eq(courtFavorites.userId, userId),
+      ),
+    )
+    .limit(1);
+  return !!row;
+}
+
+export async function getFavoriteCourtsByUser(
+  userId: string,
+  limit = 100,
+): Promise<CourtListItem[]> {
+  const db = requireDb();
+
+  const rows = await db.execute<{
+    id: string;
+    slug: string;
+    name: string;
+    address: string;
+    city: string;
+    region: string | null;
+    surface: string | null;
+    court_count: number | null;
+    has_lights: boolean | null;
+    is_indoor: boolean | null;
+    is_free: boolean | null;
+    has_hitting_wall: boolean | null;
+    has_restrooms: boolean | null;
+    import_status: ImportStatus;
+    rating_avg: number;
+    rating_count: number;
+    lat: number;
+    lng: number;
+    photo_url: string | null;
+  }>(sql`
+    SELECT
+      c.id,
+      c.slug,
+      c.name,
+      c.address,
+      c.city,
+      c.region,
+      c.surface,
+      c.court_count,
+      c.has_lights,
+      c.is_indoor,
+      c.is_free,
+      c.has_hitting_wall,
+      c.has_restrooms,
+      c.import_status,
+      c.rating_avg,
+      c.rating_count,
+      ST_Y(c.location::geometry) AS lat,
+      ST_X(c.location::geometry) AS lng,
+      (
+        SELECT cp.url FROM court_photos cp
+        WHERE cp.court_id = c.id
+        ORDER BY cp.sort_order ASC
+        LIMIT 1
+      ) AS photo_url
+    FROM court_favorites f
+    INNER JOIN courts c ON c.id = f.court_id
+    WHERE f.user_id = ${userId}
+    ORDER BY f.created_at DESC
+    LIMIT ${limit}
+  `);
+
+  return rows.rows.map(mapListRow);
 }

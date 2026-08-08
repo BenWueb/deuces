@@ -2,12 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { isCourtComplete } from "@/lib/court-completeness";
 import { requireDb } from "@/lib/db";
-import { courts, courtPhotos, comments } from "@/lib/db/schema";
+import { courts, courtFavorites, courtPhotos, comments } from "@/lib/db/schema";
 import { persistPlacePhoto } from "@/lib/import/places";
 import type { ImportCandidate } from "@/lib/import/types";
 import {
@@ -582,6 +582,58 @@ export async function deleteComment(
   }
 
   return { success: true };
+}
+
+export async function toggleFavoriteCourt(
+  courtId: string,
+): Promise<ActionResult & { favorited?: boolean }> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { error: "You must be signed in to favorite a court." };
+  }
+
+  const parsedId = idSchema.safeParse(courtId);
+  if (!parsedId.success) {
+    return { error: "Court not found." };
+  }
+
+  const db = requireDb();
+  const [court] = await db
+    .select({ id: courts.id, slug: courts.slug })
+    .from(courts)
+    .where(eq(courts.id, parsedId.data))
+    .limit(1);
+
+  if (!court) {
+    return { error: "Court not found." };
+  }
+
+  const [existing] = await db
+    .select({ id: courtFavorites.id })
+    .from(courtFavorites)
+    .where(
+      and(
+        eq(courtFavorites.courtId, court.id),
+        eq(courtFavorites.userId, session.user.id),
+      ),
+    )
+    .limit(1);
+
+  if (existing) {
+    await db
+      .delete(courtFavorites)
+      .where(eq(courtFavorites.id, existing.id));
+  } else {
+    await db.insert(courtFavorites).values({
+      courtId: court.id,
+      userId: session.user.id,
+    });
+  }
+
+  revalidatePath("/");
+  revalidatePath("/profile");
+  revalidatePath(`/courts/${court.slug}`);
+  return { success: true, favorited: !existing };
 }
 
 export async function rateCourt(

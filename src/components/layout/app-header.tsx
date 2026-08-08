@@ -70,9 +70,9 @@ export function AppHeader({
           {signedIn ? (
             <Link
               href="/courts/new"
-              className="btn-optic inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 text-xs font-bold md:min-h-10 md:px-4 md:text-sm"
+              className="btn-optic hidden min-h-10 items-center gap-1.5 rounded-full px-4 text-sm font-bold md:inline-flex"
             >
-              <AddIcon className="h-3.5 w-3.5 md:h-4 md:w-4" />
+              <AddIcon className="h-4 w-4" />
               Add a court
             </Link>
           ) : (

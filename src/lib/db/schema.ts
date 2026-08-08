@@ -190,6 +190,23 @@ export const ratings = pgTable(
   ],
 );
 
+export const courtFavorites = pgTable(
+  "court_favorites",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    courtId: uuid("court_id")
+      .notNull()
+      .references(() => courts.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("court_favorites_user_idx").on(t.userId, t.createdAt),
+  ],
+);
+
 export const comments = pgTable("comments", {
   id: uuid("id").primaryKey().defaultRandom(),
   courtId: uuid("court_id")

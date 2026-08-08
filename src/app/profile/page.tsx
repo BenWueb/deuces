@@ -7,7 +7,10 @@ import { DeucesLogo } from "@/components/layout/deuces-logo";
 import { PageHeader } from "@/components/layout/page-header";
 import { BuyMeACoffeeButton } from "@/components/support/buy-me-a-coffee";
 import { getAllFeedback } from "@/lib/queries/feedback";
-import { getCourtsCreatedByUser } from "@/lib/queries/courts";
+import {
+  getCourtsCreatedByUser,
+  getFavoriteCourtsByUser,
+} from "@/lib/queries/courts";
 
 export const metadata = {
   title: "Profile",
@@ -46,12 +49,19 @@ export default async function ProfilePage() {
 
   const isAdmin = session.user.role === "admin";
   let myCourts: Awaited<ReturnType<typeof getCourtsCreatedByUser>> = [];
+  let favoriteCourts: Awaited<ReturnType<typeof getFavoriteCourtsByUser>> = [];
   let submissions: Awaited<ReturnType<typeof getAllFeedback>> = [];
 
   try {
     myCourts = await getCourtsCreatedByUser(session.user.id);
   } catch {
     myCourts = [];
+  }
+
+  try {
+    favoriteCourts = await getFavoriteCourtsByUser(session.user.id);
+  } catch {
+    favoriteCourts = [];
   }
 
   if (isAdmin) {
@@ -97,6 +107,41 @@ export default async function ProfilePage() {
           <p className="text-sm text-muted">{session.user.email}</p>
         </div>
       </div>
+
+      <section className="mt-8 md:mt-10">
+        <div className="mb-4 flex items-end justify-between gap-3">
+          <h2 className="font-display text-xl font-bold md:text-2xl">
+            Favorite courts
+          </h2>
+          <p className="text-sm text-muted">
+            {favoriteCourts.length}{" "}
+            {favoriteCourts.length === 1 ? "court" : "courts"}
+          </p>
+        </div>
+
+        {favoriteCourts.length === 0 ? (
+          <div className="court-card px-6 py-10 text-center">
+            <p className="font-display text-lg font-semibold">No favorites yet</p>
+            <p className="mt-1 text-sm text-muted">
+              Tap Favorite on a court page to save it here.
+            </p>
+            <Link
+              href="/"
+              className="btn-court mt-5 inline-flex min-h-11 items-center justify-center rounded-2xl px-6 text-sm font-semibold"
+            >
+              Explore courts
+            </Link>
+          </div>
+        ) : (
+          <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-5">
+            {favoriteCourts.map((court) => (
+              <li key={court.id} className="min-w-0">
+                <CourtCard court={court} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <section className="mt-8 md:mt-10">
         <div className="mb-4 flex items-end justify-between gap-3">

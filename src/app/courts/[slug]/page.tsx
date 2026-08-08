@@ -9,12 +9,18 @@ import {
   CommentsSection,
   RatingControl,
 } from "@/components/courts/rating-comments";
+import { FavoriteCourtButton } from "@/components/courts/favorite-court-button";
+import { ShareCourtButton } from "@/components/courts/share-court-button";
 import { PageHeader } from "@/components/layout/page-header";
 import {
   missingContributableFields,
   needsInfo,
 } from "@/lib/court-completeness";
-import { getCourtBySlug, getUserRating } from "@/lib/queries/courts";
+import {
+  getCourtBySlug,
+  getUserRating,
+  isCourtFavorited,
+} from "@/lib/queries/courts";
 import { canEditCourt, getCurrentUser, isAdmin } from "@/lib/permissions";
 import { googleMapsDirectionsUrl, surfaceLabel } from "@/lib/utils";
 
@@ -64,6 +70,9 @@ export default async function CourtDetailPage({ params }: PageProps) {
   const userRating = session?.user?.id
     ? await getUserRating(court.id, session.user.id)
     : null;
+  const favorited = session?.user?.id
+    ? await isCourtFavorited(court.id, session.user.id)
+    : false;
 
   const currentUser = await getCurrentUser();
   const canEdit = await canEditCourt(court.id, currentUser);
@@ -178,24 +187,32 @@ export default async function CourtDetailPage({ params }: PageProps) {
             </Link>
           ) : null}
 
-          <a
-            href={googleMapsDirectionsUrl(court.lat, court.lng)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-court flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl font-semibold md:max-w-sm"
-          >
-            <svg
-              className="h-5 w-5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
+          <div className="space-y-3 md:max-w-sm">
+            <a
+              href={googleMapsDirectionsUrl(court.lat, court.lng)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-court flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl font-semibold"
             >
-              <path d="M12 22s7-4.5 7-11a7 7 0 1 0-14 0c0 6.5 7 11 7 11Z" />
-              <circle cx="12" cy="11" r="2.5" />
-            </svg>
-            Directions in Google Maps
-          </a>
+              <svg
+                className="h-5 w-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M12 22s7-4.5 7-11a7 7 0 1 0-14 0c0 6.5 7 11 7 11Z" />
+                <circle cx="12" cy="11" r="2.5" />
+              </svg>
+              Directions in Google Maps
+            </a>
+            <FavoriteCourtButton
+              courtId={court.id}
+              initialFavorited={favorited}
+              signedIn={!!session?.user}
+            />
+            <ShareCourtButton name={court.name} slug={court.slug} />
+          </div>
 
           <section>
             <h2 className="font-display mb-3 text-lg font-semibold md:text-xl">
