@@ -5,7 +5,7 @@ import { useEffect, useId, useState } from "react";
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import { FeedbackForm } from "@/components/feedback/feedback-form";
-import { BugIcon, SuggestionIcon } from "@/components/feedback/feedback-icons";
+import { BugIcon } from "@/components/feedback/feedback-icons";
 import { cn } from "@/lib/utils";
 
 export function FeedbackButton({
@@ -40,12 +40,10 @@ export function FeedbackButton({
           type="button"
           onClick={() => setOpen(true)}
           className={cn(
-            "flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl border border-border text-sm font-semibold text-foreground md:min-h-12",
+            "flex min-h-11 w-full items-center justify-center rounded-2xl border border-border text-sm font-semibold text-foreground md:min-h-12",
             className,
           )}
         >
-          <BugIcon className="h-4 w-4 text-red-600" />
-          <SuggestionIcon className="h-4 w-4 text-court" />
           Submit a bug or suggestion
         </button>
       )}

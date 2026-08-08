@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import {
   createLearnResource,
   lookupYouTubeChannelAction,
@@ -27,6 +28,7 @@ export function LearnResourceForm({
   };
   onDone?: () => void;
 }) {
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [lookingUp, setLookingUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -142,6 +144,7 @@ export function LearnResourceForm({
         setFieldErrors({});
         lastLookupUrl.current = null;
       }
+      router.refresh();
       onDone?.();
     });
   }

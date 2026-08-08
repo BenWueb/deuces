@@ -239,7 +239,8 @@ export const boundsQuerySchema = z
     north: clamp(north, -90, 90),
   }));
 
-export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+/** Stay under Vercel’s ~4.5MB request body limit so uploads get JSON errors, not plain text. */
+export const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
 
 export const IMAGE_EXTENSIONS: Record<string, string> = {
   "image/jpeg": ".jpg",
@@ -252,7 +253,7 @@ export const IMAGE_EXTENSIONS: Record<string, string> = {
 export const uploadFileSchema = z
   .file("Choose an image to upload.")
   .min(1, "That file is empty.")
-  .max(MAX_UPLOAD_BYTES, "Each photo must be under 5MB.")
+  .max(MAX_UPLOAD_BYTES, "Each photo must be under 4MB.")
   .mime(
     Object.keys(IMAGE_EXTENSIONS),
     "Unsupported image type. Use JPEG, PNG, WebP, GIF or AVIF.",

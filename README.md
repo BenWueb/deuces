@@ -84,10 +84,17 @@ npm run db:seed
 
 ### 5. Google OAuth setup
 
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create OAuth 2.0 credentials (Web application)
-3. Add authorized redirect URI: `http://localhost:3000/api/auth/callback/google`
-4. Copy client ID and secret to `.env.local`
+1. Go to [Google Cloud Console](https://console.cloud.google.com/) → **APIs & Services** → **Credentials**
+2. Create OAuth 2.0 credentials (**Web application**)
+3. **Authorized JavaScript origins**
+   - Local: `http://localhost:3000`
+   - Production: `https://www.playdeuces.app` (and `https://playdeuces.app` if you use the apex)
+4. **Authorized redirect URIs** (must match Auth.js exactly — no trailing slash on the origin)
+   - Local: `http://localhost:3000/api/auth/callback/google`
+   - Production: `https://www.playdeuces.app/api/auth/callback/google`
+   - Apex (if used): `https://playdeuces.app/api/auth/callback/google`
+5. Copy client ID and secret to `.env.local` and to Vercel **Environment Variables** (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `AUTH_SECRET`, `AUTH_URL=https://www.playdeuces.app`)
+6. OAuth consent screen: add yourself as a **Test user** while the app is in Testing, or publish the app for public sign-in
 
 ### 6. Google Places (court import)
 

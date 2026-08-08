@@ -110,8 +110,6 @@ export default async function ProfilePage() {
             Import from Google Maps
           </Link>
         )}
-        <FeedbackButton signedIn variant="row" />
-
         <BuyMeACoffeeButton variant="card" />
 
         <form
@@ -122,7 +120,7 @@ export default async function ProfilePage() {
         >
           <button
             type="submit"
-            className="flex min-h-11 w-full items-center justify-center rounded-2xl border border-border text-sm font-medium text-muted hover:text-foreground md:min-h-12"
+            className="flex min-h-11 w-full items-center justify-center rounded-2xl border border-red-200 bg-red-50 text-sm font-semibold text-red-600 hover:border-red-300 hover:bg-red-100 md:min-h-12"
           >
             Sign out
           </button>
@@ -130,6 +128,10 @@ export default async function ProfilePage() {
       </div>
 
       {isAdmin && <AdminFeedbackList items={submissions} />}
+
+      <div className="mt-6 md:mt-8">
+        <FeedbackButton signedIn variant="row" />
+      </div>
     </div>
   );
 }

@@ -238,11 +238,26 @@ export function CourtForm({
     try {
       const urls: string[] = [];
       for (const file of Array.from(files)) {
+        if (file.size > 4 * 1024 * 1024) {
+          throw new Error(`“${file.name}” is over 4MB. Choose a smaller photo.`);
+        }
+
         const fd = new FormData();
         fd.append("file", file);
         const res = await fetch("/api/upload", { method: "POST", body: fd });
-        const data = await res.json();
+        const raw = await res.text();
+        let data: { url?: string; error?: string } = {};
+        try {
+          data = raw ? (JSON.parse(raw) as typeof data) : {};
+        } catch {
+          throw new Error(
+            res.status === 413 || /entity too large/i.test(raw)
+              ? "That photo is too large. Use an image under 4MB."
+              : "Upload failed. Try a smaller JPEG or PNG.",
+          );
+        }
         if (!res.ok) throw new Error(data.error ?? "Upload failed");
+        if (!data.url) throw new Error("Upload failed — no photo URL returned.");
         urls.push(data.url);
       }
       setPhotoUrls((prev) => [...prev, ...urls].slice(0, 10));
@@ -250,6 +265,7 @@ export function CourtForm({
       setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setUploading(false);
+      e.target.value = "";
     }
   }
 

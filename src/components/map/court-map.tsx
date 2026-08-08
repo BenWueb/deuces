@@ -67,22 +67,22 @@ const userIcon = L.divIcon({
   iconAnchor: [8, 8],
 });
 
-function RecenterView({
-  center,
-  zoom,
-}: {
-  center: [number, number];
-  zoom?: number;
-}) {
+function RecenterView({ center }: { center: [number, number] }) {
   const map = useMap();
   const lastCenter = useRef<string | null>(null);
 
   useEffect(() => {
     const key = `${center[0]},${center[1]}`;
     if (lastCenter.current === key) return;
+    // Initial center/zoom come from MapContainer — only pan on later moves
+    // so dragging the add-court pin never resets zoom.
+    if (lastCenter.current === null) {
+      lastCenter.current = key;
+      return;
+    }
     lastCenter.current = key;
-    map.setView(center, zoom ?? map.getZoom());
-  }, [center, zoom, map]);
+    map.panTo(center);
+  }, [center, map]);
 
   return null;
 }
@@ -186,7 +186,7 @@ export function CourtMap({
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      <RecenterView center={resolvedCenter} zoom={zoom} />
+      <RecenterView center={resolvedCenter} />
       <FocusOnTarget target={focusTarget} />
       {onBoundsChange && <BoundsWatcher onBoundsChange={onBoundsChange} />}
       {userLocation && (

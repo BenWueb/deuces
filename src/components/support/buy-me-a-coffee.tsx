@@ -12,6 +12,9 @@ const TIP_OPTIONS = [
 
 type TipId = (typeof TIP_OPTIONS)[number]["id"];
 
+/** Flip to true when ready to show tip buttons again. */
+const SHOW_BUY_ME_A_COFFEE = false;
+
 export function BuyMeACoffeeButton({
   variant = "button",
   className,
@@ -20,6 +23,8 @@ export function BuyMeACoffeeButton({
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
+
+  if (!SHOW_BUY_ME_A_COFFEE) return null;
 
   return (
     <>

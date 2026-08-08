@@ -125,6 +125,17 @@ async function youtubeJson<T>(
         "Enable YouTube Data API v3 for your Google API key in Google Cloud Console.",
       );
     }
+    if (
+      reason === "ipRefererBlocked" ||
+      /referer\s*<empty>|from referer|blocked/i.test(message)
+    ) {
+      throw new Error(
+        "YouTube blocked this server request (empty HTTP referer). " +
+          "In Google Cloud → APIs & Services → Credentials, edit the API key: " +
+          "set Application restrictions to None (not HTTP referrers), " +
+          "and allow YouTube Data API v3 under API restrictions.",
+      );
+    }
     throw new Error(message || `YouTube lookup failed (${res.status}).`);
   }
 

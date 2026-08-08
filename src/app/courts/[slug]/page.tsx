@@ -46,7 +46,9 @@ export default async function CourtDetailPage({ params }: PageProps) {
   } catch {
     return (
       <div className="px-4 py-12 text-center md:py-20">
-        <h1 className="font-display text-xl font-bold">Database not configured</h1>
+        <h1 className="font-display text-xl font-bold">
+          Database not configured
+        </h1>
         <p className="mt-2 text-sm text-muted">
           Add DATABASE_URL to .env.local and run migrations.
         </p>
@@ -59,10 +61,9 @@ export default async function CourtDetailPage({ params }: PageProps) {
 
   if (!court) notFound();
 
-  const userRating =
-    session?.user?.id
-      ? await getUserRating(court.id, session.user.id)
-      : null;
+  const userRating = session?.user?.id
+    ? await getUserRating(court.id, session.user.id)
+    : null;
 
   const currentUser = await getCurrentUser();
   const canEdit = await canEditCourt(court.id, currentUser);
@@ -86,20 +87,11 @@ export default async function CourtDetailPage({ params }: PageProps) {
   const editHref = canEdit ? `/courts/${court.slug}/edit` : undefined;
 
   const courtSnapshot = { id: court.id, ...completeness };
-  const contributeBanner = canContributeFields ? (
+  const contributeCta = canContributeFields ? (
     <ContributeCourtInfoButton
       signedIn={!!currentUser}
       court={courtSnapshot}
-      variant="link"
-      label="Add this info"
-    />
-  ) : null;
-  const contributeAmenities = canContributeFields ? (
-    <ContributeCourtInfoButton
-      signedIn={!!currentUser}
-      court={courtSnapshot}
-      variant="button"
-      label="Know these details?"
+      variant="cta"
     />
   ) : null;
 
@@ -156,20 +148,35 @@ export default async function CourtDetailPage({ params }: PageProps) {
         </div>
 
         <div className="space-y-6 pt-5 md:pt-0">
-          {incomplete && canContributeFields && (
-            <div className="rounded-2xl border border-court/25 bg-court/5 p-4">
-              <p className="text-sm font-semibold text-foreground">
-                Some details are unknown. Help complete this court.
-              </p>
-              <div className="mt-1">{contributeBanner}</div>
-            </div>
-          )}
-
-          {court.description && (
+          {court.description?.trim() ? (
             <p className="text-sm leading-relaxed text-muted md:text-base">
               {court.description}
             </p>
-          )}
+          ) : canEdit || !currentUser ? (
+            <Link
+              href={
+                canEdit
+                  ? `/courts/${court.slug}/edit`
+                  : `/login?callbackUrl=${encodeURIComponent(`/courts/${court.slug}/edit`)}`
+              }
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-transparent px-4 text-sm font-semibold text-muted transition-colors hover:border-court/40 hover:bg-court/5 hover:text-court md:max-w-sm"
+            >
+              <svg
+                className="h-5 w-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+              </svg>
+              Add a description
+            </Link>
+          ) : null}
 
           <a
             href={googleMapsDirectionsUrl(court.lat, court.lng)}
@@ -194,11 +201,10 @@ export default async function CourtDetailPage({ params }: PageProps) {
             <h2 className="font-display mb-3 text-lg font-semibold md:text-xl">
               Amenities
             </h2>
-            <AmenitiesGrid
-              court={court}
-              contributeAction={contributeAmenities}
-            />
+            <AmenitiesGrid court={court} />
           </section>
+
+          {incomplete && canContributeFields && contributeCta}
 
           <RatingControl
             courtId={court.id}

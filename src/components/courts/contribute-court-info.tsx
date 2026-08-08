@@ -49,7 +49,7 @@ export function ContributeCourtInfoButton({
   signedIn: boolean;
   className?: string;
   label?: string;
-  variant?: "button" | "link";
+  variant?: "button" | "link" | "cta";
 }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
@@ -57,10 +57,15 @@ export function ContributeCourtInfoButton({
 
   if (missing.length === 0) return null;
 
+  const showIcon = variant !== "link";
   const buttonClass =
-    variant === "button"
-      ? "inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl border border-court/25 bg-court/5 px-4 text-sm font-semibold text-court transition-colors hover:bg-court/10"
-      : "inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-court underline";
+    variant === "cta"
+      ? "btn-optic inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl px-4 text-sm font-bold transition-[opacity,box-shadow,transform] hover:opacity-95 active:scale-[0.99] md:max-w-sm"
+      : variant === "button"
+        ? "inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-2xl border border-court/25 bg-court/5 px-4 text-sm font-semibold text-court transition-colors hover:bg-court/10"
+        : "inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-court underline";
+
+  const ctaLabel = variant === "cta" ? "Add missing details" : label;
 
   if (!signedIn) {
     return (
@@ -68,8 +73,8 @@ export function ContributeCourtInfoButton({
         href={`/login?callbackUrl=${encodeURIComponent(pathname || "/")}`}
         className={cn(buttonClass, className)}
       >
-        {variant === "button" && <InfoPlusIcon className="h-4 w-4" />}
-        Sign in to add this info
+        {showIcon && <InfoPlusIcon className="h-5 w-5" />}
+        {variant === "cta" ? ctaLabel : "Sign in to add this info"}
       </Link>
     );
   }
@@ -81,8 +86,8 @@ export function ContributeCourtInfoButton({
         onClick={() => setOpen(true)}
         className={cn(buttonClass, className)}
       >
-        {variant === "button" && <InfoPlusIcon className="h-4 w-4" />}
-        {label}
+        {showIcon && <InfoPlusIcon className="h-5 w-5" />}
+        {ctaLabel}
       </button>
       {open && (
         <ContributeCourtInfoDialog
@@ -256,15 +261,16 @@ function ContributeCourtInfoDialog({
             <form onSubmit={handleSubmit} className="space-y-4">
               {missing.includes("surface") && (
                 <div>
-                  <label className="mb-2 block text-sm font-semibold" htmlFor="contribute-surface">
+                  <label
+                    className="mb-2 block text-sm font-semibold"
+                    htmlFor="contribute-surface"
+                  >
                     Surface
                   </label>
                   <select
                     id="contribute-surface"
                     value={surface}
-                    onChange={(e) =>
-                      setSurface(e.target.value as Surface | "")
-                    }
+                    onChange={(e) => setSurface(e.target.value as Surface | "")}
                     className={inputClass}
                   >
                     <option value="">Skip for now</option>
@@ -275,14 +281,19 @@ function ContributeCourtInfoDialog({
                     ))}
                   </select>
                   {fieldErrors.surface && (
-                    <p className="mt-1.5 text-sm text-clay">{fieldErrors.surface}</p>
+                    <p className="mt-1.5 text-sm text-clay">
+                      {fieldErrors.surface}
+                    </p>
                   )}
                 </div>
               )}
 
               {missing.includes("courtCount") && (
                 <div>
-                  <label className="mb-2 block text-sm font-semibold" htmlFor="contribute-count">
+                  <label
+                    className="mb-2 block text-sm font-semibold"
+                    htmlFor="contribute-count"
+                  >
                     Number of courts
                   </label>
                   <input
@@ -341,8 +352,12 @@ function ContributeCourtInfoDialog({
 
               {missing.includes("isFree") && booleans.isFree === false && (
                 <div>
-                  <label className="mb-2 block text-sm font-semibold" htmlFor="contribute-fee">
-                    Fee notes <span className="font-normal text-muted">(optional)</span>
+                  <label
+                    className="mb-2 block text-sm font-semibold"
+                    htmlFor="contribute-fee"
+                  >
+                    Fee notes{" "}
+                    <span className="font-normal text-muted">(optional)</span>
                   </label>
                   <input
                     id="contribute-fee"

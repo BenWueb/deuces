@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import {
   deleteLearnResource,
   moveLearnResource,
@@ -17,6 +18,7 @@ export function LearnResourceList({
   items: LearnResourceListItem[];
   isAdmin: boolean;
 }) {
+  const router = useRouter();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -32,6 +34,8 @@ export function LearnResourceList({
       const result = await action();
       if (result && "error" in result && result.error) {
         setError(result.error);
+      } else {
+        router.refresh();
       }
       setPendingId(null);
     });
