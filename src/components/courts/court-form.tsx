@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { createCourt, updateCourt } from "@/lib/actions/courts";
+import { TennisBallRating } from "@/components/ui/tennis-ball-rating";
 import { searchAddress, type GeocodeResult } from "@/lib/geocode";
 import { DEFAULT_CENTER, useUserLocation } from "@/lib/hooks/use-user-location";
 import { cn, formatCoords, parseCoords } from "@/lib/utils";
@@ -12,7 +13,7 @@ import {
   fieldLabel,
 } from "@/lib/court-completeness";
 import {
-  courtInputSchema,
+  createCourtInputSchema,
   updateCourtInputSchema,
   toValidationFailure,
   type FieldErrors,
@@ -70,6 +71,7 @@ export function CourtForm({
   const [searching, setSearching] = useState(false);
   const [photoUrls, setPhotoUrls] = useState<string[]>(court?.photoUrls ?? []);
   const [uploading, setUploading] = useState(false);
+  const [stars, setStars] = useState(0);
   const { location, status: locationStatus, request: requestLocation } =
     useUserLocation();
 
@@ -300,7 +302,7 @@ export function CourtForm({
       return;
     }
 
-    const parsed = courtInputSchema.safeParse(payload);
+    const parsed = createCourtInputSchema.safeParse({ ...payload, stars });
     if (!parsed.success) {
       const failure = toValidationFailure(parsed.error);
       setError(failure.error);
@@ -604,6 +606,28 @@ export function CourtForm({
         />
         {uploading && <p className="mt-1 text-xs text-muted">Uploading...</p>}
       </Field>
+
+      {!isEditing && (
+        <Field
+          label="Your rating"
+          required
+          error={fieldErrors.stars}
+          hint="Required when adding a court"
+        >
+          <TennisBallRating
+            value={stars}
+            size="lg"
+            interactive={!pending}
+            onChange={(value) => {
+              setStars(value);
+              setFieldErrors((prev) => {
+                const { stars: _stars, ...rest } = prev;
+                return rest;
+              });
+            }}
+          />
+        </Field>
+      )}
 
       {error && (
         <div className="rounded-xl border border-clay/30 bg-clay/5 p-3 text-sm text-clay">

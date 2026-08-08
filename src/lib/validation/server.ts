@@ -5,7 +5,7 @@ import { checkClean } from "./moderation";
 import {
   commentInputSchema,
   contributeCourtInfoSchema,
-  courtInputSchema,
+  createCourtInputSchema,
   feedbackInputSchema,
   learnResourceInputSchema,
   ratingInputSchema,
@@ -37,9 +37,11 @@ function cleanCourtFields(
   checkClean(ctx, "feeNotes", "Fee notes", court.feeNotes);
 }
 
-export const createCourtSchema = courtInputSchema.superRefine((court, ctx) => {
-  cleanCourtFields(court, ctx);
-});
+export const createCourtSchema = createCourtInputSchema.superRefine(
+  (court, ctx) => {
+    cleanCourtFields(court, ctx);
+  },
+);
 
 export const updateCourtSchema = updateCourtInputSchema.superRefine(
   (court, ctx) => {

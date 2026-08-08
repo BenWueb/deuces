@@ -8,7 +8,11 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <AppHeader signedIn={signedIn} />
+      <AppHeader
+        signedIn={signedIn}
+        userImage={session?.user?.image}
+        userName={session?.user?.name}
+      />
       <div className="mx-auto min-h-full w-full max-w-lg px-0 pb-20 md:max-w-5xl md:px-6 md:pb-10 lg:max-w-7xl lg:px-8">
         {children}
       </div>

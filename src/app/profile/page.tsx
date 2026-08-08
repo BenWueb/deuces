@@ -1,12 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { auth, signOut } from "@/lib/auth";
+import { CourtCard } from "@/components/courts/court-card";
 import { AdminFeedbackList } from "@/components/feedback/admin-feedback-list";
-import { FeedbackButton } from "@/components/feedback/feedback-button";
 import { DeucesLogo } from "@/components/layout/deuces-logo";
 import { PageHeader } from "@/components/layout/page-header";
 import { BuyMeACoffeeButton } from "@/components/support/buy-me-a-coffee";
 import { getAllFeedback } from "@/lib/queries/feedback";
+import { getCourtsCreatedByUser } from "@/lib/queries/courts";
 
 export const metadata = {
   title: "Profile",
@@ -44,7 +45,15 @@ export default async function ProfilePage() {
   }
 
   const isAdmin = session.user.role === "admin";
+  let myCourts: Awaited<ReturnType<typeof getCourtsCreatedByUser>> = [];
   let submissions: Awaited<ReturnType<typeof getAllFeedback>> = [];
+
+  try {
+    myCourts = await getCourtsCreatedByUser(session.user.id);
+  } catch {
+    myCourts = [];
+  }
+
   if (isAdmin) {
     try {
       submissions = await getAllFeedback();
@@ -54,13 +63,7 @@ export default async function ProfilePage() {
   }
 
   return (
-    <div
-      className={
-        isAdmin
-          ? "mx-auto max-w-3xl px-4 py-4 md:px-0 md:py-8"
-          : "mx-auto max-w-xl px-4 py-4 md:px-0 md:py-8"
-      }
-    >
+    <div className="mx-auto max-w-3xl px-4 py-4 md:px-0 md:py-8">
       <PageHeader
         title="Profile"
         subtitle="Your account and court contributions"
@@ -95,6 +98,40 @@ export default async function ProfilePage() {
         </div>
       </div>
 
+      <section className="mt-8 md:mt-10">
+        <div className="mb-4 flex items-end justify-between gap-3">
+          <h2 className="font-display text-xl font-bold md:text-2xl">
+            Courts you added
+          </h2>
+          <p className="text-sm text-muted">
+            {myCourts.length} {myCourts.length === 1 ? "court" : "courts"}
+          </p>
+        </div>
+
+        {myCourts.length === 0 ? (
+          <div className="court-card px-6 py-10 text-center">
+            <p className="font-display text-lg font-semibold">No courts yet</p>
+            <p className="mt-1 text-sm text-muted">
+              Courts you add will show up here.
+            </p>
+            <Link
+              href="/courts/new"
+              className="btn-optic mt-5 inline-flex min-h-11 items-center justify-center rounded-2xl px-6 text-sm font-semibold"
+            >
+              Add a court
+            </Link>
+          </div>
+        ) : (
+          <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-5">
+            {myCourts.map((court) => (
+              <li key={court.id} className="min-w-0">
+                <CourtCard court={court} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
       <div className="mt-6 space-y-3 md:mt-8">
         <Link
           href="/courts/new"
@@ -128,10 +165,6 @@ export default async function ProfilePage() {
       </div>
 
       {isAdmin && <AdminFeedbackList items={submissions} />}
-
-      <div className="mt-6 md:mt-8">
-        <FeedbackButton signedIn variant="row" />
-      </div>
     </div>
   );
 }

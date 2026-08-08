@@ -135,7 +135,13 @@ export const contributeCourtInfoSchema = z
     { message: "Add at least one detail you know." },
   );
 
+/** Manual create requires the adder's rating so new courts aren't unrated. */
+export const createCourtInputSchema = courtInputSchema.extend({
+  stars: starsSchema,
+});
+
 export type CourtInput = z.input<typeof courtInputSchema>;
+export type CreateCourtFormInput = z.input<typeof createCourtInputSchema>;
 export type UpdateCourtFormInput = z.input<typeof updateCourtInputSchema>;
 export type ContributeCourtInfoInput = z.input<typeof contributeCourtInfoSchema>;
 
@@ -182,11 +188,58 @@ export const youtubeUrlSchema = z
     }
   }, "Link must be a YouTube URL.");
 
-export const learnResourceInputSchema = z.object({
-  title: requiredText("Title", 2, 120),
-  url: youtubeUrlSchema,
-  description: optionalText("Description", 500),
-});
+export const LEARN_RESOURCE_KINDS = ["channel", "video"] as const;
+export type LearnResourceKindInput = (typeof LEARN_RESOURCE_KINDS)[number];
+
+export const LEARN_VIDEO_CATEGORIES = [
+  "serve",
+  "forehand",
+  "backhand",
+  "volley",
+  "return",
+  "footwork",
+  "strategy",
+  "mental",
+  "fitness",
+  "doubles",
+  "other",
+] as const;
+export type LearnVideoCategoryInput = (typeof LEARN_VIDEO_CATEGORIES)[number];
+
+export const LEARN_VIDEO_CATEGORY_LABELS: Record<
+  LearnVideoCategoryInput,
+  string
+> = {
+  serve: "Serve",
+  forehand: "Forehand",
+  backhand: "Backhand",
+  volley: "Volley",
+  return: "Return",
+  footwork: "Footwork",
+  strategy: "Strategy & tactics",
+  mental: "Mental game",
+  fitness: "Fitness",
+  doubles: "Doubles",
+  other: "Other",
+};
+
+export const learnResourceInputSchema = z
+  .object({
+    kind: z.enum(LEARN_RESOURCE_KINDS, "Choose channel or video."),
+    category: z.enum(LEARN_VIDEO_CATEGORIES).nullable().optional(),
+    title: requiredText("Title", 2, 120),
+    url: youtubeUrlSchema,
+    description: optionalText("Description", 500),
+  })
+  .superRefine((data, ctx) => {
+    if (data.kind === "video" && !data.category) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Choose a category for this video.",
+        path: ["category"],
+      });
+    }
+  });
 
 export type LearnResourceInput = z.input<typeof learnResourceInputSchema>;
 

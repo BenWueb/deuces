@@ -216,6 +216,67 @@ export async function getCourtsInBounds(
   return rows.rows.map(mapListRow);
 }
 
+export async function getCourtsCreatedByUser(
+  userId: string,
+  limit = 100,
+): Promise<CourtListItem[]> {
+  const db = requireDb();
+
+  const rows = await db.execute<{
+    id: string;
+    slug: string;
+    name: string;
+    address: string;
+    city: string;
+    region: string | null;
+    surface: string | null;
+    court_count: number | null;
+    has_lights: boolean | null;
+    is_indoor: boolean | null;
+    is_free: boolean | null;
+    has_hitting_wall: boolean | null;
+    has_restrooms: boolean | null;
+    import_status: ImportStatus;
+    rating_avg: number;
+    rating_count: number;
+    lat: number;
+    lng: number;
+    photo_url: string | null;
+  }>(sql`
+    SELECT
+      c.id,
+      c.slug,
+      c.name,
+      c.address,
+      c.city,
+      c.region,
+      c.surface,
+      c.court_count,
+      c.has_lights,
+      c.is_indoor,
+      c.is_free,
+      c.has_hitting_wall,
+      c.has_restrooms,
+      c.import_status,
+      c.rating_avg,
+      c.rating_count,
+      ST_Y(c.location::geometry) AS lat,
+      ST_X(c.location::geometry) AS lng,
+      (
+        SELECT cp.url FROM court_photos cp
+        WHERE cp.court_id = c.id
+        ORDER BY cp.sort_order ASC
+        LIMIT 1
+      ) AS photo_url
+    FROM courts c
+    WHERE c.created_by = ${userId}
+    ORDER BY c.created_at DESC
+    LIMIT ${limit}
+  `);
+
+  return rows.rows.map(mapListRow);
+}
+
 export async function getAllCourts(limit = 500): Promise<CourtListItem[]> {
   const db = requireDb();
 

@@ -127,8 +127,24 @@ export async function createCourt(
     );
   }
 
+  await db.execute(sql`
+    INSERT INTO ratings (court_id, user_id, stars)
+    VALUES (${court.id}, ${session.user.id}, ${data.stars})
+    ON CONFLICT (court_id, user_id)
+    DO UPDATE SET stars = ${data.stars}, updated_at = now()
+  `);
+
+  await db.execute(sql`
+    UPDATE courts SET
+      rating_avg = ${data.stars},
+      rating_count = 1,
+      updated_at = now()
+    WHERE id = ${court.id}
+  `);
+
   revalidatePath("/");
   revalidatePath("/map");
+  revalidatePath("/profile");
   redirect(`/courts/${court.slug}`);
 }
 
@@ -523,6 +539,7 @@ export async function deleteCourt(courtId: string): Promise<ActionResult> {
 
   revalidatePath("/");
   revalidatePath("/map");
+  revalidatePath("/profile");
   redirect("/");
 }
 

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
-const baseTabs: {
+const tabs: {
   href: string;
   label: string;
   icon: ({ className }: { className?: string }) => React.JSX.Element;
@@ -19,21 +19,14 @@ export function BottomNav({ signedIn }: { signedIn: boolean }) {
 
   if (pathname === "/login") return null;
 
-  const tabs = signedIn
-    ? [...baseTabs, { href: "/profile", label: "Profile", icon: ProfileIcon }]
-    : [
-        ...baseTabs,
-        {
-          href: `/login?callbackUrl=${encodeURIComponent(pathname || "/")}`,
-          label: "Sign in",
-          icon: ProfileIcon,
-        },
-      ];
-
   return (
     <>
       <Link
-        href={signedIn ? "/courts/new" : `/login?callbackUrl=${encodeURIComponent("/courts/new")}`}
+        href={
+          signedIn
+            ? "/courts/new"
+            : `/login?callbackUrl=${encodeURIComponent("/courts/new")}`
+        }
         aria-label="Add court"
         className={cn(
           "btn-optic fixed right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full md:hidden",
@@ -50,9 +43,7 @@ export function BottomNav({ signedIn }: { signedIn: boolean }) {
             const active =
               tab.href === "/"
                 ? pathname === "/"
-                : tab.href.startsWith("/login")
-                  ? pathname.startsWith("/login")
-                  : pathname.startsWith(tab.href);
+                : pathname.startsWith(tab.href);
             const Icon = tab.icon;
 
             return (
@@ -107,15 +98,6 @@ function AddIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
       <path d="M12 5v14M5 12h14" />
-    </svg>
-  );
-}
-
-function ProfileIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <circle cx="12" cy="8" r="4" />
-      <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
     </svg>
   );
 }

@@ -1,11 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { asc, eq, max } from "drizzle-orm";
+import { and, asc, eq, isNull, max } from "drizzle-orm";
 import { requireDb } from "@/lib/db";
 import { learnResources } from "@/lib/db/schema";
 import { getCurrentUser, isAdmin } from "@/lib/permissions";
 import { lookupYouTubeChannel } from "@/lib/youtube/channel";
+import { lookupYouTubeVideo } from "@/lib/youtube/video";
 import {
   idSchema,
   youtubeUrlSchema,
@@ -60,7 +61,39 @@ export async function lookupYouTubeChannelAction(url: string): Promise<
   }
 }
 
-async function resolveChannelFields(input: LearnResourceServerInput) {
+export async function lookupYouTubeVideoAction(url: string): Promise<
+  | { success: true; title: string; description: string; url: string }
+  | { error: string }
+> {
+  const admin = await requireAdmin();
+  if (!admin.ok) {
+    return { error: admin.error };
+  }
+
+  const parsed = youtubeUrlSchema.safeParse(url);
+  if (!parsed.success) {
+    return toValidationFailure(parsed.error);
+  }
+
+  try {
+    const video = await lookupYouTubeVideo(parsed.data);
+    return {
+      success: true,
+      title: video.title,
+      description: video.description,
+      url: video.url,
+    };
+  } catch (error) {
+    return {
+      error:
+        error instanceof Error
+          ? error.message
+          : "Could not look up that YouTube video.",
+    };
+  }
+}
+
+async function resolveYouTubeFields(input: LearnResourceServerInput) {
   let payload = input;
   let thumbnailUrl: string | null = null;
 
@@ -69,17 +102,31 @@ async function resolveChannelFields(input: LearnResourceServerInput) {
   }
 
   try {
-    const channel = await lookupYouTubeChannel(input.url);
-    thumbnailUrl = channel.thumbnailUrl;
-    payload = {
-      title: input.title?.trim() || channel.title,
-      url: channel.url || input.url,
-      description:
-        input.description?.trim() || channel.description || undefined,
-    };
+    if (input.kind === "video") {
+      const video = await lookupYouTubeVideo(input.url);
+      thumbnailUrl = video.thumbnailUrl;
+      payload = {
+        ...input,
+        title: input.title?.trim() || video.title,
+        url: video.url || input.url,
+        description:
+          input.description?.trim() || video.description || undefined,
+        category: input.category ?? null,
+      };
+    } else {
+      const channel = await lookupYouTubeChannel(input.url);
+      thumbnailUrl = channel.thumbnailUrl;
+      payload = {
+        ...input,
+        title: input.title?.trim() || channel.title,
+        url: channel.url || input.url,
+        description:
+          input.description?.trim() || channel.description || undefined,
+        category: null,
+      };
+    }
   } catch (error) {
-    console.error("YouTube channel lookup failed", error);
-    // Keep manual fields if YouTube lookup fails.
+    console.error("YouTube lookup failed", error);
   }
 
   return { payload, thumbnailUrl };
@@ -93,7 +140,7 @@ export async function createLearnResource(
     return { error: admin.error };
   }
 
-  const { payload, thumbnailUrl } = await resolveChannelFields(input);
+  const { payload, thumbnailUrl } = await resolveYouTubeFields(input);
   const parsed = learnResourceSchema.safeParse(payload);
   if (!parsed.success) {
     return toValidationFailure(parsed.error);
@@ -102,10 +149,14 @@ export async function createLearnResource(
   const db = requireDb();
   const [row] = await db
     .select({ maxOrder: max(learnResources.sortOrder) })
-    .from(learnResources);
+    .from(learnResources)
+    .where(eq(learnResources.kind, parsed.data.kind));
   const nextOrder = (row?.maxOrder ?? -1) + 1;
 
   await db.insert(learnResources).values({
+    kind: parsed.data.kind,
+    category:
+      parsed.data.kind === "video" ? (parsed.data.category ?? null) : null,
     title: parsed.data.title,
     url: parsed.data.url,
     description: parsed.data.description?.trim() || null,
@@ -132,7 +183,7 @@ export async function updateLearnResource(
     return toValidationFailure(idParsed.error);
   }
 
-  const { payload, thumbnailUrl } = await resolveChannelFields(input);
+  const { payload, thumbnailUrl } = await resolveYouTubeFields(input);
   const parsed = learnResourceSchema.safeParse(payload);
   if (!parsed.success) {
     return toValidationFailure(parsed.error);
@@ -142,6 +193,9 @@ export async function updateLearnResource(
   const [updated] = await db
     .update(learnResources)
     .set({
+      kind: parsed.data.kind,
+      category:
+        parsed.data.kind === "video" ? (parsed.data.category ?? null) : null,
       title: parsed.data.title,
       url: parsed.data.url,
       description: parsed.data.description?.trim() || null,
@@ -199,26 +253,52 @@ export async function moveLearnResource(
   }
 
   const db = requireDb();
-  const items = await db
+  const [currentRow] = await db
+    .select({
+      id: learnResources.id,
+      kind: learnResources.kind,
+      category: learnResources.category,
+      sortOrder: learnResources.sortOrder,
+    })
+    .from(learnResources)
+    .where(eq(learnResources.id, parsed.data))
+    .limit(1);
+
+  if (!currentRow) {
+    return { error: "Link not found." };
+  }
+
+  // Reorder within the same kind (and category for videos).
+  const siblings = await db
     .select({
       id: learnResources.id,
       sortOrder: learnResources.sortOrder,
     })
     .from(learnResources)
+    .where(
+      currentRow.kind === "video"
+        ? and(
+            eq(learnResources.kind, "video"),
+            currentRow.category
+              ? eq(learnResources.category, currentRow.category)
+              : isNull(learnResources.category),
+          )
+        : eq(learnResources.kind, "channel"),
+    )
     .orderBy(asc(learnResources.sortOrder));
 
-  const index = items.findIndex((item) => item.id === parsed.data);
+  const index = siblings.findIndex((item) => item.id === parsed.data);
   if (index < 0) {
     return { error: "Link not found." };
   }
 
   const swapIndex = direction === "up" ? index - 1 : index + 1;
-  if (swapIndex < 0 || swapIndex >= items.length) {
+  if (swapIndex < 0 || swapIndex >= siblings.length) {
     return { success: true };
   }
 
-  const current = items[index]!;
-  const other = items[swapIndex]!;
+  const current = siblings[index]!;
+  const other = siblings[swapIndex]!;
 
   await db
     .update(learnResources)

@@ -37,6 +37,25 @@ export const feedbackStatusEnum = pgEnum("feedback_status", [
   "resolved",
 ]);
 
+export const learnResourceKindEnum = pgEnum("learn_resource_kind", [
+  "channel",
+  "video",
+]);
+
+export const learnVideoCategoryEnum = pgEnum("learn_video_category", [
+  "serve",
+  "forehand",
+  "backhand",
+  "volley",
+  "return",
+  "footwork",
+  "strategy",
+  "mental",
+  "fitness",
+  "doubles",
+  "other",
+]);
+
 export const users = pgTable("user", {
   id: text("id")
     .primaryKey()
@@ -209,6 +228,8 @@ export const learnResources = pgTable(
   "learn_resources",
   {
     id: uuid("id").primaryKey().defaultRandom(),
+    kind: learnResourceKindEnum("kind").notNull().default("channel"),
+    category: learnVideoCategoryEnum("category"),
     title: text("title").notNull(),
     url: text("url").notNull(),
     description: text("description"),
@@ -220,7 +241,14 @@ export const learnResources = pgTable(
     createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
   },
-  (t) => [index("learn_resources_sort_idx").on(t.sortOrder, t.createdAt)],
+  (t) => [
+    index("learn_resources_sort_idx").on(t.sortOrder, t.createdAt),
+    index("learn_resources_kind_category_idx").on(
+      t.kind,
+      t.category,
+      t.sortOrder,
+    ),
+  ],
 );
 
 export type Court = typeof courts.$inferSelect;
@@ -230,3 +258,6 @@ export type Comment = typeof comments.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type Feedback = typeof feedback.$inferSelect;
 export type LearnResource = typeof learnResources.$inferSelect;
+export type LearnResourceKind = (typeof learnResourceKindEnum.enumValues)[number];
+export type LearnVideoCategory =
+  (typeof learnVideoCategoryEnum.enumValues)[number];

@@ -9,14 +9,24 @@ import {
 } from "@/lib/actions/learn";
 import { LearnResourceForm } from "@/components/learn/learn-resource-form";
 import type { LearnResourceListItem } from "@/lib/queries/learn";
+import {
+  LEARN_VIDEO_CATEGORY_LABELS,
+  type LearnVideoCategoryInput,
+} from "@/lib/validation/schemas";
 import { cn } from "@/lib/utils";
 
 export function LearnResourceList({
   items,
   isAdmin,
+  emptyTitle = "No links yet",
+  emptyDescription,
+  badgeLabel,
 }: {
   items: LearnResourceListItem[];
   isAdmin: boolean;
+  emptyTitle?: string;
+  emptyDescription?: string;
+  badgeLabel?: (item: LearnResourceListItem) => string;
 }) {
   const router = useRouter();
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -44,11 +54,12 @@ export function LearnResourceList({
   if (items.length === 0) {
     return (
       <div className="court-card flex flex-col items-center px-6 py-12 text-center md:py-16">
-        <p className="font-display text-lg font-semibold">No channels yet</p>
+        <p className="font-display text-lg font-semibold">{emptyTitle}</p>
         <p className="mt-1 text-sm text-muted">
-          {isAdmin
-            ? "Add a YouTube channel above to get started."
-            : "Check back soon — coaching links are on the way."}
+          {emptyDescription ??
+            (isAdmin
+              ? "Add a YouTube link above to get started."
+              : "Check back soon — coaching links are on the way.")}
         </p>
       </div>
     );
@@ -66,6 +77,15 @@ export function LearnResourceList({
         {items.map((item, index) => {
           const busy = pending && pendingId === item.id;
           const editing = editingId === item.id;
+          const label =
+            badgeLabel?.(item) ??
+            (item.kind === "video"
+              ? item.category
+                ? LEARN_VIDEO_CATEGORY_LABELS[
+                    item.category as LearnVideoCategoryInput
+                  ]
+                : "Video"
+              : "Channel");
 
           return (
             <li key={item.id} className="min-w-0">
@@ -112,7 +132,7 @@ export function LearnResourceList({
                             <span className="text-[#cc0000]" aria-hidden>
                               <YouTubeIcon className="h-3 w-3" />
                             </span>
-                            Channel
+                            {label}
                           </span>
                         </div>
                       </div>

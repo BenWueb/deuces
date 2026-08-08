@@ -2,11 +2,18 @@ import "server-only";
 
 import { asc, desc, eq, isNull } from "drizzle-orm";
 import { requireDb } from "@/lib/db";
-import { learnResources } from "@/lib/db/schema";
+import {
+  learnResources,
+  type LearnResourceKind,
+  type LearnVideoCategory,
+} from "@/lib/db/schema";
 import { lookupYouTubeChannel } from "@/lib/youtube/channel";
+import { lookupYouTubeVideo } from "@/lib/youtube/video";
 
 export type LearnResourceListItem = {
   id: string;
+  kind: LearnResourceKind;
+  category: LearnVideoCategory | null;
   title: string;
   url: string;
   description: string | null;
@@ -17,6 +24,8 @@ export type LearnResourceListItem = {
 
 const listColumns = {
   id: learnResources.id,
+  kind: learnResources.kind,
+  category: learnResources.category,
   title: learnResources.title,
   url: learnResources.url,
   description: learnResources.description,
@@ -35,7 +44,7 @@ export async function listLearnResources(): Promise<LearnResourceListItem[]> {
 }
 
 /**
- * Fills missing channel photos from YouTube Data API (banner when available).
+ * Fills missing photos from YouTube Data API.
  * Safe to call on page load — only hits the API for rows without a thumbnail.
  */
 export async function backfillLearnThumbnails(): Promise<number> {
@@ -43,6 +52,7 @@ export async function backfillLearnThumbnails(): Promise<number> {
   const missing = await db
     .select({
       id: learnResources.id,
+      kind: learnResources.kind,
       url: learnResources.url,
     })
     .from(learnResources)
@@ -53,13 +63,16 @@ export async function backfillLearnThumbnails(): Promise<number> {
 
   for (const row of missing) {
     try {
-      const channel = await lookupYouTubeChannel(row.url);
-      if (!channel.thumbnailUrl) continue;
+      const info =
+        row.kind === "video"
+          ? await lookupYouTubeVideo(row.url)
+          : await lookupYouTubeChannel(row.url);
+      if (!info.thumbnailUrl) continue;
 
       await db
         .update(learnResources)
         .set({
-          thumbnailUrl: channel.thumbnailUrl,
+          thumbnailUrl: info.thumbnailUrl,
           updatedAt: new Date(),
         })
         .where(eq(learnResources.id, row.id));

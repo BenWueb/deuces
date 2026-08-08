@@ -5,23 +5,33 @@ import { useRouter } from "next/navigation";
 import {
   createLearnResource,
   lookupYouTubeChannelAction,
+  lookupYouTubeVideoAction,
   updateLearnResource,
 } from "@/lib/actions/learn";
 import {
+  LEARN_VIDEO_CATEGORIES,
+  LEARN_VIDEO_CATEGORY_LABELS,
   learnResourceInputSchema,
   toValidationFailure,
   youtubeUrlSchema,
   type FieldErrors,
+  type LearnResourceKindInput,
+  type LearnVideoCategoryInput,
 } from "@/lib/validation/schemas";
+import { cn } from "@/lib/utils";
 
 export function LearnResourceForm({
   mode = "create",
+  kind: initialKind = "channel",
   resource,
   onDone,
 }: {
   mode?: "create" | "edit";
+  kind?: LearnResourceKindInput;
   resource?: {
     id: string;
+    kind: LearnResourceKindInput;
+    category: LearnVideoCategoryInput | null;
     title: string;
     url: string;
     description: string | null;
@@ -33,6 +43,12 @@ export function LearnResourceForm({
   const [lookingUp, setLookingUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [kind, setKind] = useState<LearnResourceKindInput>(
+    resource?.kind ?? initialKind,
+  );
+  const [category, setCategory] = useState<LearnVideoCategoryInput | "">(
+    resource?.category ?? "",
+  );
   const [title, setTitle] = useState(resource?.title ?? "");
   const [url, setUrl] = useState(resource?.url ?? "");
   const [description, setDescription] = useState(resource?.description ?? "");
@@ -52,7 +68,10 @@ export function LearnResourceForm({
       return rest;
     });
 
-    const result = await lookupYouTubeChannelAction(parsed.data);
+    const result =
+      kind === "video"
+        ? await lookupYouTubeVideoAction(parsed.data)
+        : await lookupYouTubeChannelAction(parsed.data);
     setLookingUp(false);
 
     if ("error" in result) {
@@ -80,7 +99,7 @@ export function LearnResourceForm({
 
     return () => window.clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- debounce URL only
-  }, [url]);
+  }, [url, kind]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -89,6 +108,8 @@ export function LearnResourceForm({
 
     startTransition(async () => {
       let payload = {
+        kind,
+        category: kind === "video" ? category || null : null,
         title: title.trim(),
         url: url.trim(),
         description: description.trim() || undefined,
@@ -103,12 +124,16 @@ export function LearnResourceForm({
       }
 
       if (!payload.title) {
-        const lookedUp = await lookupYouTubeChannelAction(urlParsed.data);
+        const lookedUp =
+          kind === "video"
+            ? await lookupYouTubeVideoAction(urlParsed.data)
+            : await lookupYouTubeChannelAction(urlParsed.data);
         if ("error" in lookedUp) {
           setError(lookedUp.error);
           return;
         }
         payload = {
+          ...payload,
           title: lookedUp.title,
           url: lookedUp.url || urlParsed.data,
           description: payload.description || lookedUp.description || undefined,
@@ -141,6 +166,7 @@ export function LearnResourceForm({
         setTitle("");
         setUrl("");
         setDescription("");
+        setCategory("");
         setFieldErrors({});
         lastLookupUrl.current = null;
       }
@@ -149,11 +175,71 @@ export function LearnResourceForm({
     });
   }
 
+  const isVideo = kind === "video";
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
         <div className="rounded-xl border border-clay/30 bg-clay/5 p-3 text-sm text-clay">
           {error}
+        </div>
+      )}
+
+      {mode === "create" && (
+        <div className="flex gap-2 rounded-2xl bg-white/70 p-1">
+          {(
+            [
+              ["channel", "Channel"],
+              ["video", "Video"],
+            ] as const
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => {
+                setKind(value);
+                lastLookupUrl.current = null;
+                setError(null);
+              }}
+              className={cn(
+                "min-h-10 flex-1 rounded-xl text-sm font-semibold transition-colors",
+                kind === value
+                  ? "bg-court text-white shadow-sm"
+                  : "text-muted hover:text-foreground",
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {isVideo && (
+        <div>
+          <label
+            className="mb-2 block text-sm font-semibold"
+            htmlFor={`learn-category-${mode}`}
+          >
+            Category <span className="text-clay">*</span>
+          </label>
+          <select
+            id={`learn-category-${mode}`}
+            value={category}
+            onChange={(e) =>
+              setCategory(e.target.value as LearnVideoCategoryInput | "")
+            }
+            className="w-full rounded-xl border border-border bg-white px-3 py-2.5 text-sm outline-none focus:border-court focus:ring-2 focus:ring-court/20"
+          >
+            <option value="">Choose a category</option>
+            {LEARN_VIDEO_CATEGORIES.map((value) => (
+              <option key={value} value={value}>
+                {LEARN_VIDEO_CATEGORY_LABELS[value]}
+              </option>
+            ))}
+          </select>
+          {fieldErrors.category && (
+            <p className="mt-1.5 text-sm text-clay">{fieldErrors.category}</p>
+          )}
         </div>
       )}
 
@@ -170,13 +256,21 @@ export function LearnResourceForm({
           onBlur={() => {
             if (url.trim()) void lookupFromUrl(url, true);
           }}
-          placeholder="https://www.youtube.com/@channel"
+          placeholder={
+            isVideo
+              ? "https://www.youtube.com/watch?v=…"
+              : "https://www.youtube.com/@channel"
+          }
           className="w-full rounded-xl border border-border bg-white px-3 py-2.5 text-sm outline-none focus:border-court focus:ring-2 focus:ring-court/20"
         />
         <p className="mt-1.5 text-xs text-muted">
           {lookingUp
-            ? "Looking up channel name and description…"
-            : "Paste a channel link — name and description fill in automatically."}
+            ? isVideo
+              ? "Looking up video title and description…"
+              : "Looking up channel name and description…"
+            : isVideo
+              ? "Paste a video link — title and description fill in automatically."
+              : "Paste a channel link — name and description fill in automatically."}
         </p>
         {fieldErrors.url && (
           <p className="mt-1.5 text-sm text-clay">{fieldErrors.url}</p>
@@ -185,7 +279,8 @@ export function LearnResourceForm({
 
       <div>
         <label className="mb-2 block text-sm font-semibold" htmlFor={`learn-title-${mode}`}>
-          Channel name <span className="text-clay">*</span>
+          {isVideo ? "Video title" : "Channel name"}{" "}
+          <span className="text-clay">*</span>
         </label>
         <input
           id={`learn-title-${mode}`}
@@ -233,7 +328,9 @@ export function LearnResourceForm({
               : "Adding…"
             : mode === "edit"
               ? "Save changes"
-              : "Add channel"}
+              : isVideo
+                ? "Add video"
+                : "Add channel"}
         </button>
         {mode === "edit" && onDone && (
           <button

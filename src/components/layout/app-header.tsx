@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FeedbackButton } from "@/components/feedback/feedback-button";
@@ -7,20 +8,26 @@ import { BuyMeACoffeeButton } from "@/components/support/buy-me-a-coffee";
 import { cn } from "@/lib/utils";
 import { DeucesLogo } from "./deuces-logo";
 
-const baseLinks = [
+const links = [
   { href: "/", label: "Explore" },
   { href: "/map", label: "Map" },
   { href: "/learn", label: "Learn" },
 ];
 
-export function AppHeader({ signedIn }: { signedIn: boolean }) {
+export function AppHeader({
+  signedIn,
+  userImage,
+  userName,
+}: {
+  signedIn: boolean;
+  userImage?: string | null;
+  userName?: string | null;
+}) {
   const pathname = usePathname();
 
   if (pathname === "/login") return null;
 
-  const desktopLinks = signedIn
-    ? [...baseLinks, { href: "/profile", label: "Profile" }]
-    : baseLinks;
+  const profileActive = pathname.startsWith("/profile");
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/80 bg-gradient-to-b from-white/95 to-white/75 shadow-[0_8px_24px_rgba(21,32,51,0.05)] backdrop-blur-xl">
@@ -33,7 +40,7 @@ export function AppHeader({ signedIn }: { signedIn: boolean }) {
         <DeucesLogo size="sm" />
 
         <nav className="hidden items-center gap-1 md:flex">
-          {desktopLinks.map((link) => {
+          {links.map((link) => {
             const active =
               link.href === "/"
                 ? pathname === "/"
@@ -74,6 +81,34 @@ export function AppHeader({ signedIn }: { signedIn: boolean }) {
               className="btn-court inline-flex min-h-10 items-center rounded-full px-4 text-sm font-bold md:px-5"
             >
               Sign in
+            </Link>
+          )}
+
+          {signedIn && (
+            <Link
+              href="/profile"
+              aria-label="Profile"
+              title="Profile"
+              className={cn(
+                "inline-flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border transition-[box-shadow,transform] active:scale-95 md:h-10 md:w-10",
+                profileActive
+                  ? "border-court ring-2 ring-court/25"
+                  : "border-border hover:border-court/40",
+              )}
+            >
+              {userImage ? (
+                <Image
+                  src={userImage}
+                  alt={userName ?? "Profile"}
+                  width={40}
+                  height={40}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="flex h-full w-full items-center justify-center bg-court/10 text-sm font-bold text-court">
+                  {(userName ?? "U")[0]?.toUpperCase()}
+                </span>
+              )}
             </Link>
           )}
         </div>
