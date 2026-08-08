@@ -129,7 +129,7 @@ export async function lookupYouTubeVideo(
 
   const snippet = body.items?.[0]?.snippet;
   const title = snippet?.title?.trim();
-  if (!title) {
+  if (!snippet || !title) {
     throw new Error("Could not find that YouTube video.");
   }
 
