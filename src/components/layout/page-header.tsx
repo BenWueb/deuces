@@ -18,7 +18,7 @@ export function PageHeader({
   return (
     <header
       className={cn(
-        "mb-8 mt-12 md:mb-12 md:mt-16 lg:mt-20",
+        "mb-6 mt-6 md:mb-12 md:mt-16 lg:mt-20",
         align === "center" ? "text-center" : "text-left",
         className,
       )}
@@ -26,20 +26,20 @@ export function PageHeader({
       {eyebrow && (
         <p
           className={cn(
-            "mb-2 text-sm font-medium uppercase tracking-widest text-clay",
+            "mb-1.5 text-xs font-medium uppercase tracking-widest text-clay md:mb-2 md:text-sm",
             align === "center" && "mx-auto",
           )}
         >
           {eyebrow}
         </p>
       )}
-      <h1 className="font-display text-5xl font-bold tracking-tight text-court sm:text-6xl md:text-7xl">
+      <h1 className="font-display text-3xl font-bold tracking-tight text-court sm:text-5xl md:text-6xl lg:text-7xl">
         {title}
       </h1>
       {subtitle && (
         <p
           className={cn(
-            "mt-3 max-w-xl text-base font-medium text-muted sm:text-lg md:mt-4 md:text-xl",
+            "mt-2 max-w-xl text-sm font-medium text-muted sm:text-base md:mt-4 md:text-lg lg:text-xl",
             align === "center" && "mx-auto",
           )}
         >
@@ -49,7 +49,7 @@ export function PageHeader({
       {actions && (
         <div
           className={cn(
-            "mt-5 flex flex-wrap items-center gap-3 md:mt-6",
+            "mt-4 flex flex-wrap items-center gap-3 md:mt-6",
             align === "center" && "justify-center",
           )}
         >

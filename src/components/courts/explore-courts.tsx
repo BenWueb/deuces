@@ -271,7 +271,7 @@ export function ExploreCourts() {
       />
 
       <div className="sticky top-14 z-10 -mx-4 bg-background/90 px-4 py-3 backdrop-blur-md md:top-[calc(4rem+0.75rem)] md:mx-auto md:max-w-4xl md:rounded-2xl md:border md:border-border md:bg-card/90 md:px-4 md:shadow-[0_8px_28px_rgba(21,32,51,0.06)]">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center">
+        <div className="flex items-center gap-2">
           <div className="relative min-w-0 flex-1">
             <svg
               className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted"
@@ -291,54 +291,53 @@ export function ExploreCourts() {
               className="h-12 w-full rounded-2xl border border-border bg-card pl-10 pr-4 text-sm outline-none ring-court/30 focus:ring-2 md:border-transparent md:bg-background"
             />
           </div>
-          <div className="flex shrink-0 gap-2">
+          <button
+            type="button"
+            onClick={() => setFiltersOpen((open) => !open)}
+            className={cn(
+              "flex h-12 shrink-0 items-center justify-center gap-1.5 rounded-2xl border px-3 text-sm font-semibold sm:gap-2 sm:px-4",
+              filtersOpen || activeFilterCount > 0
+                ? "border-court/30 bg-court/10 text-court"
+                : "border-border bg-card text-foreground md:bg-background",
+            )}
+            aria-expanded={filtersOpen}
+            aria-label="Filters"
+          >
+            <FilterIcon className="h-4 w-4" />
+            <span className="hidden sm:inline">Filters</span>
+            {activeFilterCount > 0 && (
+              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-court px-1.5 text-[11px] font-bold text-white">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
+          {locationStatus !== "granted" && (
             <button
               type="button"
-              onClick={() => setFiltersOpen((open) => !open)}
-              className={cn(
-                "flex min-h-11 items-center justify-center gap-2 rounded-2xl border px-4 text-sm font-semibold md:min-h-12",
-                filtersOpen || activeFilterCount > 0
-                  ? "border-court/30 bg-court/10 text-court"
-                  : "border-border bg-card text-foreground md:bg-background",
-              )}
-              aria-expanded={filtersOpen}
+              onClick={requestLocation}
+              disabled={locationStatus === "loading"}
+              className="btn-court flex h-12 shrink-0 items-center justify-center gap-2 rounded-2xl px-3 text-sm font-semibold disabled:opacity-60 sm:px-4 md:px-5"
             >
-              <FilterIcon className="h-4 w-4" />
-              Filters
-              {activeFilterCount > 0 && (
-                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-court px-1.5 text-[11px] font-bold text-white">
-                  {activeFilterCount}
-                </span>
-              )}
-            </button>
-            {locationStatus !== "granted" && (
-              <button
-                type="button"
-                onClick={requestLocation}
-                disabled={locationStatus === "loading"}
-                className="btn-court flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-2xl px-4 text-sm font-semibold disabled:opacity-60 md:min-h-12 md:px-5"
+              <svg
+                className="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
               >
-                <svg
-                  className="h-4 w-4"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <circle cx="12" cy="12" r="3" />
-                  <path d="M12 2v2M12 20v2M2 12h2M20 12h2" />
-                </svg>
-                <span className="hidden sm:inline">
-                  {locationStatus === "loading"
-                    ? "Finding nearby..."
-                    : "Use my location"}
-                </span>
-                <span className="sm:hidden">
-                  {locationStatus === "loading" ? "…" : "Near me"}
-                </span>
-              </button>
-            )}
-          </div>
+                <circle cx="12" cy="12" r="3" />
+                <path d="M12 2v2M12 20v2M2 12h2M20 12h2" />
+              </svg>
+              <span className="hidden sm:inline">
+                {locationStatus === "loading"
+                  ? "Finding nearby..."
+                  : "Use my location"}
+              </span>
+              <span className="sm:hidden">
+                {locationStatus === "loading" ? "…" : "Near me"}
+              </span>
+            </button>
+          )}
         </div>
 
         {filtersOpen && (
